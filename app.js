@@ -56,5 +56,8 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.listen(3040, '127.0.0.1', () => {
+  console.log('servidor rodando');
+});
 
 module.exports = app;

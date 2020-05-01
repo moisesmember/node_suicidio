@@ -2,14 +2,17 @@ const express = require('express');
 const router = express.Router();
 const pg = require('pg');
 const path = require('path');
-const connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432/todo';
+const connectionString = process.env.DATABASE_URL || 'postgres://postgres:1926@localhost:5433/DB_DATAWAREHOUSE';
 
 router.get('/', (req, res, next) => {
   res.sendFile(path.join(
     __dirname, '..', '..', 'client', 'views', 'index.html'));
 });
 
-router.get('/api/v1/todos', (req, res, next) => {
+/**
+ * Rota de Medida de Dispersão do Suicídio
+ */
+router.get('/brazil/suicidio_medida_dispersao', (req, res, next) => {
   const results = [];
   // Get a Postgres client from the connection pool
   pg.connect(connectionString, (err, client, done) => {
@@ -20,7 +23,61 @@ router.get('/api/v1/todos', (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('SELECT * FROM items ORDER BY id ASC;');
+    const query = client.query('SELECT * FROM public.view_suicidio_medida_dispersao');
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      return res.json(results);
+    });
+  });
+});
+
+/**
+ * Rota de amostra temporal do Número de suicidio
+ */
+router.get('/brazil/amostra_temporal_suicidio', (req, res, next) => {
+  const results = [];
+  // Get a Postgres client from the connection pool
+  pg.connect(connectionString, (err, client, done) => {
+    // Handle connection errors
+    if(err) {
+      done();
+      console.log(err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('SELECT * FROM public.view_amostra_temporal_suicidio');
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      return res.json(results);
+    });
+  });
+});
+
+/**
+ * Rota responsável por listar todos dos dados do Brasil
+ */
+router.get('/brazil/all', (req, res, next) => {
+  const results = [];
+  // Get a Postgres client from the connection pool
+  pg.connect(connectionString, (err, client, done) => {
+    // Handle connection errors
+    if(err) {
+      done();
+      console.log(err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('SELECT * FROM public.suicidio_1985_2016');
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);
